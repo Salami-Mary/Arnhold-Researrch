@@ -1,0 +1,80 @@
+<!doctype html>
+<title>Student Headshot Grid</title>
+<style>
+* { box-sizing: border-box; }
+html, body {
+  background: transparent;
+}
+body {
+  margin: 0;
+  font-family: -apple-system, "Segoe UI", Inter, system-ui, sans-serif;
+  padding: 14px;
+}
+.wrap {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 6px;
+  background: transparent;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.tile {
+  aspect-ratio: 1 / 1;
+  background: transparent;
+  overflow: hidden;
+}
+.tile img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform .35s ease;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .tile:hover img { transform: scale(1.06); }
+}
+@media (max-width: 900px) {
+  .grid { grid-template-columns: repeat(5, 1fr); }
+}
+@media (max-width: 480px) {
+  .grid { grid-template-columns: repeat(3, 1fr); }
+}
+</style>
+<div class="wrap">
+  <div class="grid">
+      <div class="tile"><img src="1617502092374.jpg" alt="Student headshot 1" loading="lazy"></div>
+      <div class="tile"><img src="1665066663577_1.jpg" alt="Student headshot 2" loading="lazy"></div>
+      <div class="tile"><img src="1683065587525.jpg" alt="Student headshot 3" loading="lazy"></div>
+      <div class="tile"><img src="1683160030084.jpg" alt="Student headshot 4" loading="lazy"></div>
+      <div class="tile"><img src="1698440431059.jpg" alt="Student headshot 5" loading="lazy"></div>
+      <div class="tile"><img src="1705129790338_1.jpg" alt="Student headshot 6" loading="lazy"></div>
+      <div class="tile"><img src="1740497459304_1.jpg" alt="Student headshot 7" loading="lazy"></div>
+      <div class="tile"><img src="1754592435030.jpg" alt="Student headshot 8" loading="lazy"></div>
+      <div class="tile"><img src="460505557_893009998924599_6935518141989150375_n.jpg" alt="Student headshot 9" loading="lazy"></div>
+      <div class="tile"><img src="austin_brooksby_001a_copy.jpg" alt="Student headshot 10" loading="lazy"></div>
+      <div class="tile"><img src="burnett_eden.jpg" alt="Student headshot 11" loading="lazy"></div>
+      <div class="tile"><img src="caughman_allie_phd_0_jpg.jpg" alt="Student headshot 12" loading="lazy"></div>
+      <div class="tile"><img src="cohen_dana.jpg" alt="Student headshot 13" loading="lazy"></div>
+      <div class="tile"><img src="dsc_0279_jpg.jpg" alt="Student headshot 14" loading="lazy"></div>
+      <div class="tile"><img src="del_rossi_gemma_bren_phd_reduced_gemma_del_rossi.jpg" alt="Student headshot 15" loading="lazy"></div>
+      <div class="tile"><img src="feitora_leonardo_phd_jpg.jpg" alt="Student headshot 16" loading="lazy"></div>
+      <div class="tile"><img src="headshot_2.jpg" alt="Student headshot 17" loading="lazy"></div>
+      <div class="tile"><img src="hemond_olivia_mesm2025_1_jpg.jpg" alt="Student headshot 18" loading="lazy"></div>
+      <div class="tile"><img src="justin_kim_29.jpg" alt="Student headshot 19" loading="lazy"></div>
+      <div class="tile"><img src="kinsey_matthews_phd_jpg.jpg" alt="Student headshot 20" loading="lazy"></div>
+      <div class="tile"><img src="lenaya_aiden_gonzales_mesm2026_jpg.jpg" alt="Student headshot 21" loading="lazy"></div>
+      <div class="tile"><img src="mauricio_collado_bren_grad_2019_01_jpg.jpg" alt="Student headshot 22" loading="lazy"></div>
+      <div class="tile"><img src="muir_sam_meds_23_bren_portraits_0001_jpg.jpg" alt="Student headshot 23" loading="lazy"></div>
+      <div class="tile"><img src="saryu_ramnath_bren_mesm_headshots_2024_0004_0_jpg.jpg" alt="Student headshot 24" loading="lazy"></div>
+      <div class="tile"><img src="screenshot_2025_08_13_at_3_23_36_pm.jpg" alt="Student headshot 25" loading="lazy"></div>
+      <div class="tile"><img src="somhegyi_olivia_mesm_2024_001_jpg.jpg" alt="Student headshot 26" loading="lazy"></div>
+      <div class="tile"><img src="vikesh_dheriya_headshot_jpg.jpg" alt="Student headshot 27" loading="lazy"></div>
+      <div class="tile"><img src="yutian_fang_phd_jpg.jpg" alt="Student headshot 28" loading="lazy"></div>
+      <div class="tile"><img src="erk4501.jpg" alt="Student headshot 29" loading="lazy"></div>
+      <div class="tile"><img src="unnamed_1_1.jpg" alt="Student headshot 30" loading="lazy"></div>
+  </div>
+</div>

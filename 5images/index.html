@@ -1,0 +1,338 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Blue 5 Species Range Maps</title>
+<link rel="stylesheet" href="https://js.arcgis.com/4.29/esri/themes/light/main.css">
+<script src="https://js.arcgis.com/4.29/"></script>
+<style>
+  * { box-sizing: border-box; overflow-anchor: none; }
+  html, body { background: transparent; }
+  body {
+    margin: 0;
+    font-family: -apple-system, "Segoe UI", Calibri, sans-serif;
+  }
+
+  .pin-wrap {
+    position: relative;
+    height: 500vh; /* 5 steps x 100vh */
+  }
+
+  .pin-content {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: 32px;
+  }
+
+  .stage {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    max-width: 1500px;
+  }
+
+  .grid-panel {
+    /* Sized to fit alongside the always-visible map panel (760px + 36px
+       margin) within the 1500px stage, rather than the ~900px it could take
+       if it were the only thing on screen. */
+    width: min(640px, 54vw);
+    flex-shrink: 0;
+    transition: width 0.7s cubic-bezier(.4,0,.2,1);
+  }
+  .stage.active .grid-panel {
+    width: 340px;
+  }
+
+  .tile-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 16px;
+    transition: gap 0.7s ease;
+  }
+  .stage.active .tile-grid {
+    gap: 8px;
+  }
+
+  .tile {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    border-radius: 14px;
+    overflow: hidden;
+    cursor: pointer;
+    border: 2px solid rgba(231,169,76,0);
+    transition: border-color 0.4s ease, transform 0.4s ease, box-shadow 0.4s ease;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+  }
+  .tile:nth-child(1) { grid-column: 1 / 3; }
+  .tile:nth-child(2) { grid-column: 3 / 5; }
+  .tile:nth-child(3) { grid-column: 5 / 7; }
+  .tile:nth-child(4) { grid-column: 2 / 4; }
+  .tile:nth-child(5) { grid-column: 4 / 6; }
+
+  .tile img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    filter: brightness(0.75);
+    transition: filter 0.4s ease;
+  }
+  .tile.active img {
+    filter: brightness(1);
+  }
+  .tile.active {
+    border-color: #E7A94C;
+    transform: scale(1.04);
+    box-shadow: 0 0 22px rgba(231,169,76,0.5);
+  }
+  .tile .label {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    padding: 10px 12px 8px;
+    background: linear-gradient(to top, rgba(11,20,40,0.9), rgba(11,20,40,0));
+    color: #FFFFFF;
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .stage.active .tile .label {
+    font-size: 11px;
+    padding: 6px 8px 6px;
+  }
+
+  .map-panel {
+    /* Always present at full size and visible from page load — the map view
+       is constructed once, immediately, into this container (defaulting to
+       the first species) and never has to be revealed from a hidden or
+       zero-sized state. Hiding it (via width:0, opacity:0 or display:none)
+       is what caused the map to render blank in some browsers, since the
+       WebGL view could end up constructed against a container with no real
+       size. Only its horizontal position shifts slightly as the grid resizes. */
+    width: 760px;
+    height: 640px;
+    flex-shrink: 0;
+    margin-left: 36px;
+    border-radius: 18px;
+    position: relative;
+    background: #12213D;
+    border: 1px solid rgba(231,169,76,0.25);
+  }
+
+  .map-target {
+    width: 100%;
+    height: 100%;
+    transition: opacity 0.3s ease;
+  }
+  .map-target.swapping {
+    opacity: 0.25;
+  }
+
+  .progress-rail {
+    position: absolute;
+    bottom: 36px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+  .stage.active .progress-rail {
+    opacity: 1;
+  }
+  .progress-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(159,179,214,0.35);
+    transition: background 0.3s ease, transform 0.3s ease;
+  }
+  .progress-dot.active {
+    background: #E7A94C;
+    transform: scale(1.3);
+  }
+</style>
+</head>
+<body>
+
+<div class="pin-wrap" id="pinWrap">
+  <div class="pin-content">
+    <div class="stage" id="stage">
+      <div class="grid-panel">
+        <div class="tile-grid" id="tileGrid"></div>
+      </div>
+
+      <div class="map-panel" id="mapPanel">
+        <div class="map-target" id="mapDiv"></div>
+      </div>
+
+      <div class="progress-rail" id="progressRail"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SPECIES = [
+  { name: "Green Sea Turtle", img: "photos/turtle.jpg", webmapId: "29486a180d7a4c97ae9e6814e5885cb2" },
+  { name: "Humpback Whale", img: "photos/whale.jpg", webmapId: "58a6b801646a414796945c749473cfda" },
+  { name: "Pantropical Spotted Dolphin", img: "photos/dolphins.jpg", webmapId: "14406486e2e947869aa2be9777de4d04" },
+  { name: "Whale Shark", img: "photos/sharks.jpg", webmapId: "dc0a3723c2354d5aa18e939f6e985244" },
+  { name: "Giant Manta Ray", img: "photos/rays.jpg", webmapId: "344e8d1a34c84fa59c393330c57a04d2" }
+];
+
+const tileGrid = document.getElementById("tileGrid");
+const stage = document.getElementById("stage");
+const mapDiv = document.getElementById("mapDiv");
+const progressRail = document.getElementById("progressRail");
+const pinWrap = document.getElementById("pinWrap");
+
+let currentIndex = 0;
+let activated = false;
+let view = null;
+
+SPECIES.forEach((s, i) => {
+  const tile = document.createElement("div");
+  tile.className = "tile";
+  tile.innerHTML = `<img src="${s.img}" alt="${s.name}"><div class="label">${s.name}</div>`;
+  tile.addEventListener("click", () => goToStep(i, true));
+  tileGrid.appendChild(tile);
+
+  const dot = document.createElement("div");
+  dot.className = "progress-dot";
+  progressRail.appendChild(dot);
+});
+
+const tiles = Array.from(tileGrid.children);
+const dots = Array.from(progressRail.children);
+
+function setActivated(on) {
+  if (activated === on) return;
+  activated = on;
+  stage.classList.toggle("active", on);
+}
+
+function highlight(i) {
+  tiles.forEach((t, idx) => t.classList.toggle("active", idx === i));
+  dots.forEach((d, idx) => d.classList.toggle("active", idx === i));
+}
+
+function showSpecies(i) {
+  if (i === currentIndex) return;
+  currentIndex = i;
+  highlight(i);
+  applySpecies(SPECIES[i]);
+}
+
+let WebMapCtor = null;
+let pendingSpecies = null;
+
+// Each species' webmap was authored in ArcGIS Online with its own initial
+// viewpoint, deliberately framed for that species' range (confirmed: their
+// saved scales genuinely differ from one another). The bug was that
+// reassigning view.map to a new WebMap does NOT by itself move the camera
+// to that map's saved viewpoint — it just swaps the data while the camera
+// stays wherever it was, so every species after the first rendered at
+// whatever extent happened to be on screen already. (Computing a "fit to
+// the range layer's real data extent" instead was tried and rejected: a
+// few of these species' range polygons cross the antimeridian, which makes
+// their naive bounding box balloon out to nearly the full width of the
+// world regardless of species.)
+//
+// Calling view.goTo() immediately after swapping view.map intermittently
+// throws "Cannot read properties of null (reading 'animation')" — an
+// internal ArcGIS JS API race where the view's animation manager isn't
+// wired up yet for the new map. It isn't tied to a fixed number of
+// frames/ms, so instead of guessing a delay, failed attempts are retried
+// a few times a short beat apart.
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function goToWithRetry(target, attempts) {
+  let attempt = 0;
+  const tryOnce = () => view.goTo(target).catch((err) => {
+    attempt += 1;
+    if (attempt >= attempts) throw err;
+    return wait(120).then(tryOnce);
+  });
+  return tryOnce();
+}
+
+function zoomToWebmap(webmap) {
+  return webmap.load().then(() => {
+    const vp = webmap.initialViewProperties && webmap.initialViewProperties.viewpoint;
+    return vp ? view.when().then(() => goToWithRetry(vp, 5)) : null;
+  }).catch(() => {});
+}
+
+function applySpecies(s) {
+  if (!view) {
+    // ArcGIS modules are still loading — the initial construction below
+    // will pick up whichever species was requested most recently.
+    pendingSpecies = s;
+    return;
+  }
+  mapDiv.classList.add("swapping");
+  const webmap = new WebMapCtor({ portalItem: { id: s.webmapId } });
+  view.map = webmap;
+  zoomToWebmap(webmap).then(() => mapDiv.classList.remove("swapping"));
+}
+
+require(["esri/WebMap", "esri/views/MapView"], (WebMap, MapView) => {
+  WebMapCtor = WebMap;
+  const initial = pendingSpecies || SPECIES[0];
+  const webmap = new WebMapCtor({ portalItem: { id: initial.webmapId } });
+  view = new MapView({ container: "mapDiv", map: webmap });
+  view.when(() => zoomToWebmap(webmap).then(() => mapDiv.classList.remove("swapping")));
+});
+
+highlight(0);
+
+function goToStep(i, fromClick) {
+  setActivated(true);
+  showSpecies(i);
+  if (fromClick) {
+    const total = pinWrap.offsetHeight - window.innerHeight;
+    const targetProgress = (i + 0.5) / SPECIES.length;
+    const targetY = pinWrap.offsetTop + total * targetProgress;
+    window.scrollTo({ top: targetY, behavior: "smooth" });
+  }
+}
+
+function onScroll() {
+  const rect = pinWrap.getBoundingClientRect();
+  const total = pinWrap.offsetHeight - window.innerHeight;
+  const scrolled = -rect.top;
+  const progress = Math.max(0, Math.min(1, scrolled / total));
+
+  if (progress <= 0.001) {
+    setActivated(false);
+    return;
+  }
+  setActivated(true);
+  const idx = Math.min(SPECIES.length - 1, Math.floor(progress * SPECIES.length));
+  showSpecies(idx);
+}
+
+let ticking = false;
+function scheduleScrollCheck() {
+  if (!ticking) {
+    requestAnimationFrame(() => { onScroll(); ticking = false; });
+    ticking = true;
+  }
+}
+window.addEventListener("scroll", scheduleScrollCheck);
+// The iframe's viewport size can settle after this script first runs (e.g.
+// the embed resizing itself, or a late layout pass) — recheck on resize too,
+// otherwise an inaccurate initial read can leave the section stuck "active".
+window.addEventListener("resize", scheduleScrollCheck);
+
+requestAnimationFrame(() => requestAnimationFrame(onScroll));
+</script>
+
+</body>
+</html>

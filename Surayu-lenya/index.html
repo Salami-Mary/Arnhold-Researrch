@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Student Perspective</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    background: transparent;
+  }
+  body {
+    margin: 0;
+    padding: 24px;
+    font-family: -apple-system, "Segoe UI", Calibri, sans-serif;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 260px));
+    justify-content: center;
+    gap: 20px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .card {
+    aspect-ratio: 3 / 4;
+    perspective: 1000px;
+    cursor: pointer;
+  }
+  .card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.7s cubic-bezier(.4,.2,.2,1);
+    transform-style: preserve-3d;
+  }
+  .card.flipped .card-inner {
+    transform: rotateY(180deg);
+  }
+  .face {
+    position: absolute;
+    inset: 0;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+  }
+  .front {
+    background: #E9E6DE;
+  }
+  .front img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .front .initials {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    font-weight: 700;
+    color: #5A5F66;
+  }
+  .front .info {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    padding: 14px 14px 12px;
+    background: linear-gradient(to top, rgba(11,20,40,0.92), rgba(11,20,40,0));
+  }
+  .front .name {
+    color: #FFFFFF;
+    font-size: 15px;
+    font-weight: 700;
+  }
+  .front .degree {
+    color: #C9D3E5;
+    font-size: 11px;
+    margin-top: 2px;
+  }
+  .front .cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+    background: #E7A94C;
+    color: #1B2A4A;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 20px;
+  }
+  .back {
+    background: #1B2A4A;
+    padding: 20px 22px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow-y: auto;
+    transform: rotateY(180deg);
+  }
+  .back .quote {
+    color: #FFFFFF;
+    font-size: 13px;
+    font-style: italic;
+    line-height: 1.4;
+  }
+  .back .attribution {
+    margin-top: 14px;
+    flex-shrink: 0;
+  }
+  .back .name {
+    color: #E7A94C;
+    font-size: 14px;
+    font-weight: 700;
+  }
+  .back .degree {
+    color: #E7EBF0;
+    font-size: 12px;
+    margin-top: 2px;
+  }
+  .back .close-hint {
+    margin-top: 14px;
+    color: #7A87A3;
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+</style>
+</head>
+<body>
+
+<div class="grid" id="grid"></div>
+
+<script>
+/* ---------------------------------------------------------------
+   EDIT THIS LIST: one entry per Fellow quoted in this section.
+   Reuse this same file for every Student Perspective block —
+   just swap the array contents per project.
+   img: leave null for initials placeholder, or set a hosted photo URL.
+
+   Quotes are capped at ~195 characters so the back of the card
+   never needs to scroll at the smallest card width (220px). All
+   quotes render at a fixed 13px so every card matches in scale.
+--------------------------------------------------------------- */
+const QUOTE_FONT_SIZE = 13;
+const QUOTE_CHAR_LIMIT = 195;
+
+const STUDENTS = [
+  {
+    name: "Sarayu Ramnath",
+    degree: "Master of Environmental Science and Management, 2026",
+    quote: "This experience solidified my passion for marine conservation and sparked a new interest in working internationally, showing me how powerful cross-border partnerships can be for regional impact.",
+    img: "student_photos/sarayu-ramnath.jpg"
+  },
+  {
+    name: "Lenaya-Aiden Gonzales",
+    degree: "Master of Environmental Science and Management, 2026",
+    quote: "Working with Conservation International as an Arnhold Fellow opened my eyes to the interconnected world of marine conservation and how essential international collaboration is for protecting it.",
+    img: "student_photos/lenaya-aiden-gonzales.jpg"
+  },
+  {
+    name: "Hayden Vega",
+    degree: "B.A. Marine Science, B.S. Environmental Studies, B.S. Ecology and Evolution, 2025",
+    quote: "The Arnhold Climate Collaborative Fellowship is special—it's a community where science is driven not by problems but by solutions. That belief has inspired me to pursue a career in climate solutions.",
+    img: "student_photos/hayden-vega.jpg"
+  }
+];
+
+function initials(name) {
+  return name.split(" ").map(w => w[0]).slice(0,2).join("").toUpperCase();
+}
+
+const grid = document.getElementById("grid");
+STUDENTS.forEach(s => {
+  if (s.quote.length > QUOTE_CHAR_LIMIT) {
+    console.warn(`Quote for ${s.name} is ${s.quote.length} chars, over the ${QUOTE_CHAR_LIMIT}-char limit and may need to scroll.`);
+  }
+  const card = document.createElement("div");
+  card.className = "card";
+  card.innerHTML = `
+    <div class="card-inner">
+      <div class="face front">
+        ${s.img ? `<img src="${s.img}" alt="${s.name}">` : `<div class="initials">${initials(s.name)}</div>`}
+        <div class="info">
+          <div class="name">${s.name}</div>
+          <div class="degree">${s.degree}</div>
+          <div class="cta">Click to read quote →</div>
+        </div>
+      </div>
+      <div class="face back">
+        <div class="quote" style="font-size:${QUOTE_FONT_SIZE}px">"${s.quote}"</div>
+        <div class="attribution">
+          <div class="name">${s.name}</div>
+          <div class="degree">${s.degree}</div>
+        </div>
+        <div class="close-hint">Click to flip back</div>
+      </div>
+    </div>`;
+  card.addEventListener("click", () => card.classList.toggle("flipped"));
+  grid.appendChild(card);
+});
+</script>
+
+</body>
+</html>
